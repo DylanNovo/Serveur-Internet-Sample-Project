@@ -1,0 +1,40 @@
+services:
+  fail2ban:
+    image: lscr.io/linuxserver/fail2ban:latest
+    container_name: fail2ban
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_ADMIN
+    network_mode: host
+    volumes:
+      - ./fail2ban-config:/config:z
+      - ./f2b-run:/var/run/fail2ban:z
+      - /var/log:/var/log:ro
+      - /var/log/httpd:/remotelogs/apache2:ro
+    restart: unless-stopped
+
+  fail2ban-ui:
+    image: swissmakers/fail2ban-ui:latest
+    container_name: fail2ban-ui
+    privileged: true
+    networks:
+      - proxy
+    volumes:
+      - ./config:/config:Z
+      - /var/log:/var/log:ro
+      - /var/log/httpd:/remotelogs/apache2:ro
+      - ./fail2ban-config/fail2ban:/etc/fail2ban:z
+      - ./f2b-run:/var/run/fail2ban:z
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fail2ban-ui.rule=Host(`fail2ban.dylan-novo.ovh`)"
+      - "traefik.http.routers.fail2ban-ui.entrypoints=websecure"
+      - "traefik.http.routers.fail2ban-ui.tls=true"
+      - "traefik.http.services.fail2ban-ui.loadbalancer.server.port=8080"
+      # Middleware d'auth (doit exister côté Traefik/Tinyauth)
+      - "traefik.http.routers.fail2ban-ui.middlewares=tinyauth@docker"
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,55 @@
+services:
+  frontend:
+    image: dylannovo/frontend
+    container_name: frontend
+    networks:
+      - proxy
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`tasklist.dylan-novo.ovh`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.frontend.middlewares=tinyauth"
+        
+
+  backend:
+    image: dylannovo/backend
+    container_name: backend
+    networks:
+      - proxy
+    depends_on:
+      - database
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`tasklist.dylan-novo.ovh`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - traefik.http.routers.backend.tls=true
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+
+
+  database:
+    image: dylannovo/database
+    container_name: database
+    networks:
+      - proxy
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+    volumes:
+      - ./db-data:/var/lib/mysql
+
+
+
+
+networks:
+  proxy:
+    external: true
