@@ -1,0 +1,4 @@
+tls:
+  certificates:
+    - certFile: /etc/letsencrypt/live/dylan-novo.ovh/fullchain.pem
+      keyFile: /etc/letsencrypt/live/dylan-novo.ovh/privkey.pem
