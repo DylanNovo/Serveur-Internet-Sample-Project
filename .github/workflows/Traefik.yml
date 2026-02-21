@@ -12,45 +12,44 @@ jobs:
     steps:
       - name: Deploy on remote server
         uses: appleboy/ssh-action@v1.2.0
-
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-          # Traefik  test
           TRAEFIK_USER: ${{ secrets.TRAEFIK_USERS }}
           TRAEFIK_ID: ${{ secrets.TRAEFIK_PROVIDERS_GOOGLE_CLIENT_ID }}
           TRAEFIK_SECRET: ${{ secrets.TRAEFIK_PROVIDERS_GOOGLE_CLIENT_SECRET }}
-          OAUTH_WHITELIST: ${{ secrets.TRAEFIK_OAUTH_WHITELIST }}
-          APP_URL: ${{ secrets.TRAEFIK_APP_URL }}
-          
+          TRAEFIK_OAUTH_WHITELIST: ${{ secrets.TRAEFIK_OAUTH_WHITELIST }}
+          TRAEFIK_APP_URL: ${{ secrets.TRAEFIK_APP_URL }}
+
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-          envs: TRAEFIK_USER,TRAEFIK_ID,TRAEFIK_SECRET,OAUTH_WHITELIST,APP_URL
+          # IMPORTANT: envoyer les variables qui existent réellement
+          envs: GH_TOKEN,TRAEFIK_USER,TRAEFIK_ID,TRAEFIK_SECRET,TRAEFIK_OAUTH_WHITELIST,TRAEFIK_APP_URL
 
           script: |
-            # clone le rep
+            set -e
+
+            rm -rf Serveur-Internet-Sample-Project || true
             git clone https://$GH_TOKEN@github.com/DylanNovo/Serveur-Internet-Sample-Project.git
-            
-            # copie vers /root/srv
-            rsync -av Serveur-Internet-Sample-Project/srv/tasklist/ /home/rocky/root/srv/
 
+            # copie TOUT srv/ (traefik + tasklist + etc)
+            sudo mkdir -p /root/srv
+            sudo rsync -av Serveur-Internet-Sample-Project/srv/ /root/srv/
 
-            # suppression du repo cloné
             rm -rf Serveur-Internet-Sample-Project
 
-            # Traefik
-            cd /home/rocky/root/srv/traefik
-            cat <<'EOF' > .env
-            USERS=$TRAEFIK_USER
-            PROVIDERS_GOOGLE_CLIENT_ID=$TRAEFIK_ID
-            PROVIDERS_GOOGLE_CLIENT_SECRET=$TRAEFIK_SECRET
-            OAUTH_WHITELIST=$OAUTH_WHITELIST
-            APP_URL=$APP_URL
+            # Ecrire le .env pour Traefik (expansion OK)
+            cd /root/srv/traefik
+            cat > .env <<EOF
+            USERS=${TRAEFIK_USER}
+            PROVIDERS_GOOGLE_CLIENT_ID=${TRAEFIK_ID}
+            PROVIDERS_GOOGLE_CLIENT_SECRET=${TRAEFIK_SECRET}
+            OAUTH_WHITELIST=${TRAEFIK_OAUTH_WHITELIST}
+            APP_URL=${TRAEFIK_APP_URL}
             EOF
 
-            # lancement docker
-            cd /home/rocky/root/srv/traefik
-            docker compose up -d --force-recreate
+            # Déployer
+            sudo docker compose up -d --force-recreate
