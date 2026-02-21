@@ -32,17 +32,17 @@ jobs:
 
           script: |
             # clone le rep
-            git clone https://$GH_TOKEN@github.com/EmilienRoche/Serveur-Internet-Sample-Project.git
+            git clone https://$GH_TOKEN@github.com/DylanNovo/Serveur-Internet-Sample-Project.git
             
             # copie vers /root/srv
-            rsync -av Serveur-Internet-Sample-Project/home/rocky/srv/tasklist/ /home/rocky/srv/
+            rsync -av Serveur-Internet-Sample-Project/srv/tasklist/ /home/rocky/root/srv/
 
 
             # suppression du repo cloné
             rm -rf Serveur-Internet-Sample-Project
 
             # Traefik
-            cd /home/rocky/srv/traefik
+            cd /home/rocky/root/srv/traefik
             cat <<'EOF' > .env
             USERS=$TRAEFIK_USER
             PROVIDERS_GOOGLE_CLIENT_ID=$TRAEFIK_ID
@@ -52,5 +52,5 @@ jobs:
             EOF
 
             # lancement docker
-            cd /home/rocky/srv/traefik
+            cd /home/rocky/root/srv/traefik
             docker compose up -d --force-recreate
