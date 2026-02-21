@@ -35,7 +35,7 @@ jobs:
             git clone https://$GH_TOKEN@github.com/DylanNovo/Serveur-Internet-Sample-Project.git
             
             # copie vers /root/srv
-            rsync -av Serveur-Internet-Sample-Project/srv/tasklist/ /home/rocky/root/srv/
+            rsync -av Serveur-Internet-Sample-Project/srv/traefik/ /home/rocky/root/srv/
 
 
             # suppression du repo cloné
