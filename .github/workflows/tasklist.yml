@@ -1,0 +1,59 @@
+name: Deployment Workflow
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  Deploy-Docker-Infra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy on remote server
+        uses: appleboy/ssh-action@v1.2.0
+
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          
+          # Tasklist test
+          TASKLIST_DB_HOST: ${{ secrets.TASKLIST_DB_HOST }}
+          TASKLIST_DB_PORT: ${{ secrets.TASKLIST_DB_PORT }}
+          TASKLIST_DB_USER: ${{ secrets.TASKLIST_DB_USER }}
+          TASKLIST_DB_PASSWORD: ${{ secrets.TASKLIST_DB_PASSWORD }}
+          TASKLIST_DB_NAME: ${{ secrets.TASKLIST_DB_NAME }}
+          TASKLIST_MARIADB_ROOT_PASSWORD: ${{ secrets.TASKLIST_MARIADB_ROOT_PASSWORD }}
+          TASKLIST_MARIADB_DATABASE: ${{ secrets.TASKLIST_MARIADB_DATABASE }}
+          
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          envs: GH_TOKEN,TASKLIST_DB_HOST,TASKLIST_DB_PORT,TASKLIST_DB_USER,TASKLIST_DB_PASSWORD,TASKLIST_DB_NAME,TASKLIST_MARIADB_ROOT_PASSWORD,TASKLIST_MARIADB_DATABASE
+#fs
+          script: |
+            # clone le rep
+            git clone https://$GH_TOKEN@github.com/DylanNovo/Serveur-Internet-Sample-Project.git
+            
+            # copie vers /root/srv
+            cp -r Serveur-Internet-Sample-Project/srv/tasklist/* /home/rocky/root/srv/tasklist
+
+            # suppression du repo cloné
+            rm -rf Serveur-Internet-Sample-Project
+            
+            # TaskList
+            cd /home/rocky/root/srv/tasklist
+            cat <<'EOF' > .env
+            DB_HOST=$TASKLIST_DB_HOST
+            DB_PORT=$TASKLIST_DB_PORT
+            DB_USER=$TASKLIST_DB_USER
+            DB_PASSWORD=$TASKLIST_DB_PASSWORD
+            DB_NAME=$TASKLIST_DB_NAME
+            MARIADB_ROOT_PASSWORD=$TASKLIST_MARIADB_ROOT_PASSWORD
+            MARIADB_DATABASE=$TASKLIST_MARIADB_DATABASE
+            EOF
+
+            # lancement docker
+            cd /home/rocky/srv/tasklist
+            docker compose up -d --force-recreate
