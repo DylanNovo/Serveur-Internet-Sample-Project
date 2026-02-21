@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-          envs: TRAEFIK_USER,TRAEFIK_ID,TRAEFIK_SECRET,OAUTH_WHITELIST,APP_URL
+          envs: USERS,TRAEFIK_PROVIDERS_GOOGLE_CLIENT_ID,TRAEFIK_PROVIDERS_GOOGLE_CLIENT_SECRET,OAUTH_WHITELIST,APP_URL
 
           script: |
             # clone le rep
